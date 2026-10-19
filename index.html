@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#10251e">
   <meta name="description" content="骰盅對決：一場輕鬆的雙人三骰桌遊，不涉及賭博或金錢。">
   <title>骰盅對決</title>
-  <link rel="stylesheet" href="./style.css?v=hk-3">
-  <script type="module" src="./app.js?v=hk-3"></script>
+  <link rel="stylesheet" href="./style.css?v=hk-4">
+  <script type="module" src="./app.js?v=hk-4"></script>
 </head>
 <body>
   <main class="game-shell">
@@ -19,10 +19,34 @@
           <h1>骰盅對決</h1>
         </div>
       </div>
-      <button class="icon-button sound-button" id="soundBtn" type="button" aria-label="聲音設定" title="聲音設定">
+      <button class="icon-button sound-button" id="soundBtn" type="button" aria-pressed="true" aria-label="骰聲及報點：開，點擊關閉" title="骰聲及報點開關">
         <span class="sound-glyph" aria-hidden="true"><i></i><b></b></span>
       </button>
     </header>
+
+    <section class="settings" aria-label="遊戲設定">
+      <div class="access-controls">
+        <button id="textBtn" class="setting-button" type="button" aria-pressed="false">大字：關</button>
+        <button id="musicBtn" class="setting-button" type="button" aria-pressed="false">背景音樂：關</button>
+      </div>
+      <fieldset class="mode-picker"><legend>玩法選擇</legend>
+        <label><input type="radio" name="mode" value="duel" checked> 比兩人總點數</label>
+        <label><input type="radio" name="mode" value="guess"> 猜大／小</label>
+      </fieldset>
+      <p id="modeRules" class="mode-rules">兩人輪流搖三粒骰，總點數較大者勝，同分平局。</p>
+      <p class="setting-note">切換玩法會重新開始。</p>
+      <div id="guessPanel" hidden>
+        <p class="guess-intro" id="guessHint">兩位玩家先選大或小，再搖同一盅。</p>
+        <fieldset class="guess-picker"><legend>玩家 1 猜</legend>
+          <button type="button" data-player="0" data-guess="small" aria-pressed="false">小</button>
+          <button type="button" data-player="0" data-guess="big" aria-pressed="false">大</button>
+        </fieldset>
+        <fieldset class="guess-picker"><legend>玩家 2 猜</legend>
+          <button type="button" data-player="1" data-guess="small" aria-pressed="false">小</button>
+          <button type="button" data-player="1" data-guess="big" aria-pressed="false">大</button>
+        </fieldset>
+      </div>
+    </section>
 
     <section class="scoreboard" aria-label="玩家記分">
       <article class="player-card is-active" id="player1" aria-label="玩家 1">
@@ -89,13 +113,13 @@
     </section>
 
     <footer class="game-footer">
-      <p class="rule-note"><span class="rule-mark" aria-hidden="true">◇</span>三骰總點數較大者勝 · 同分平局 · 兩人輪流</p>
+      <p class="rule-note" id="footerRules"><span class="rule-mark" aria-hidden="true">◇</span>三骰總點數較大者勝 · 同分平局 · 兩人輪流</p>
       <div class="footer-bottom">
         <span class="device-note">手機支援體感，請在 Chrome 打開</span>
         <button class="reset-button" id="resetBtn" type="button"><span aria-hidden="true">↺</span> 重新開始</button>
       </div>
       <p class="fair-play">輕鬆桌遊，不涉及賭博或金錢</p>
-      <p class="audio-credit">骰盅實錄：<a href="https://pixabay.com/sound-effects/dice-cup-60668/" target="_blank" rel="noopener">Breviceps / Pixabay</a> · <a href="https://pixabay.com/service/license-summary/" target="_blank" rel="noopener">Content License</a></p>
+      <p class="audio-credit">骰盅實錄：<a href="https://pixabay.com/sound-effects/dice-cup-60668/" target="_blank" rel="noopener">Breviceps / Pixabay</a> · <a href="https://pixabay.com/service/license-summary/" target="_blank" rel="noopener">Content License</a> · 背景音樂為原創合成短曲</p>
     </footer>
   </main>
 </body>
