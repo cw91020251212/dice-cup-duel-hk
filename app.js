@@ -1,30 +1,12 @@
 import * as THREE from './three.module.js';
 import * as CANNON from './cannon-es.js';
 import {CompatRenderer} from './compat-renderer.js';
-import {woodClack,unlockWoodAudio,initVoice,announce,cancelSpeech,setEnabled} from './sound.js?v=hk-5';
-import {startMusic,stopMusic,setMusicEnabled} from './music.js?v=hk-5';
-import {classifyRoll,judgeGuesses} from './rules.js?v=hk-5';
+import {woodClack,unlockWoodAudio,initVoice,announce,cancelSpeech,setEnabled} from './sound.js?v=hk-6';
+import {startMusic,stopMusic,setMusicEnabled} from './music.js?v=hk-6';
 const $ = id => document.getElementById(id);
 let scene, camera, renderer, world, dice=[], cup, lid, plate, clock;
 let phase='idle', player=0, scores=[null,null], rolls=[null,null], energy=0, held=false, started=false, sound=true, audio, lastSound=0, lastKick=0, lastMotion=0, revealAt=0, flatSince=0, orient=null, sensorSeen=false, simAccumulator=0, startTime=0, revealProgress=0, settleData=[];
-let mode='duel', guesses=[null,null], guessPoints=[0,0], music=false;
-const guessReady=()=>mode==='duel'||guesses.every(Boolean);
-function syncGuesses(){
- const locked=!['idle','ready'].includes(phase);
- document.querySelectorAll('[data-guess]').forEach(b=>{b.disabled=locked;b.setAttribute('aria-pressed',String(guesses[+b.dataset.player]===b.dataset.guess));});
- $('shakeBtn').disabled=['settling','revealing','revealed'].includes(phase)||!guessReady();$('startBtn').disabled=!guessReady();
- text('guessHint',locked?'本盅選擇已鎖定，揭盅後可再玩。':guessReady()?'兩位已選好，可以搖骰；開始搖動後鎖定。':'兩位玩家先選大或小，再搖同一盅。');
- if(mode==='guess'&&!locked)text('instruction',guessReady()?'已選好，按住「搖骰」再揭盅':!guesses[0]?'玩家 1，請選大或小':'玩家 2，請選大或小');
-}
-function changeMode(value){
- mode=value;document.body.dataset.mode=mode;guessPoints=[0,0];resetTurn(true);
- $('guessPanel').hidden=mode!=='guess';
- const rule=mode==='guess'?'小：4–10 點｜大：11–17 點。三粒相同為「骰」，不屬大或小，兩人不加分。兩人猜同一盅，猜中各加 1 分。':'兩人輪流搖三粒骰，總點數較大者勝，同分平局。';
- text('modeRules',rule);text('footerRules',mode==='guess'?'猜中 +1 分 · 猜錯或「骰」不加分 · 不涉及金錢':'三骰總點數較大者勝 · 同分平局 · 兩人輪流');
- document.querySelectorAll('.score-caption').forEach(el=>el.textContent=mode==='guess'?'累計猜中分數':'本輪點數');
- if(mode==='guess'){text('score1','0 分');text('score2','0 分');}
- syncGuesses();
-}
+let music=false;
 let gravityEstimate={x:0,y:0,z:9.81};
 const faces=[3,4,1,6,2,5];
 const normals=[new THREE.Vector3(1,0,0),new THREE.Vector3(-1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,-1,0),new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,-1)];
@@ -65,15 +47,15 @@ function init(){
  bind();syncUI();initVoice();window.__diceReady=true;
 }
 function kick(x,y,z,power=1){
- if(!['ready','shaking'].includes(phase)||!guessReady())return;
+ if(!['ready','shaking'].includes(phase))return;
  if(phase==='ready'){cancelSpeech();$('announcement').hidden=true;startMusic();}
- phase='shaking';if(mode==='guess')syncGuesses();const now=performance.now();lastKick=now;energy=Math.min(100,energy+power*5);$('energyFill').style.width=energy+'%';$('energy').setAttribute('aria-valuenow',String(Math.round(energy)));text('status',mode==='guess'?'兩人猜大／小 · 搖骰中':`玩家 ${player+1} · 搖骰中`);text('stageBadge','SHAKING / 搖動中');text('instruction',energy>15?'搖好後，把手機屏幕朝上放平':'繼續搖一搖，讓三粒骰子翻滾');
+ phase='shaking';const now=performance.now();lastKick=now;energy=Math.min(100,energy+power*5);$('energyFill').style.width=energy+'%';$('energy').setAttribute('aria-valuenow',String(Math.round(energy)));text('status',`玩家 ${player+1} · 搖骰中`);text('stageBadge','SHAKING / 搖動中');text('instruction',energy>15?'搖好後，把手機屏幕朝上放平':'繼續搖一搖，讓三粒骰子翻滾');
  for(const {body:b} of dice){b.wakeUp();b.velocity.x=Math.max(-12,Math.min(12,b.velocity.x+x*.23));b.velocity.z=Math.max(-12,Math.min(12,b.velocity.z+z*.23));b.velocity.y=Math.max(-8,Math.min(10,b.velocity.y+Math.abs(y)*.11+power*1.1));b.angularVelocity.set(b.angularVelocity.x+rand(-power*4,power*4),b.angularVelocity.y+rand(-power*4,power*4),b.angularVelocity.z+rand(-power*4,power*4));}
  if(energy>=12)$('revealBtn').disabled=false;
 }
 async function begin(){
- unlockAudio();if(!guessReady()||started)return;started=true;startTime=performance.now();phase='ready';
- $('startBtn').hidden=true;text('status',mode==='guess'?'兩人猜大／小':`輪到玩家 ${player+1}`);text('instruction','按住「搖骰」，或搖一搖手機');text('stageBadge','READY / 等待搖動');text('sensorStatus','正在檢測體感…');
+ unlockAudio();if(started)return;started=true;startTime=performance.now();phase='ready';
+ $('startBtn').hidden=true;text('status',`輪到玩家 ${player+1}`);text('instruction','按住「搖骰」，或搖一搖手機');text('stageBadge','READY / 等待搖動');text('sensorStatus','正在檢測體感…');
  try{
  const requests=[];
  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')requests.push(DeviceMotionEvent.requestPermission());
@@ -99,28 +81,19 @@ function startReveal(){
  phase='revealing';revealProgress=0;const values=[];settleData=dice.map(({mesh,body:b},i)=>{mesh.position.copy(b.position);mesh.quaternion.copy(b.quaternion);const top=topFace(mesh);values.push(top.value);return {pos:mesh.position.clone(),q:mesh.quaternion.clone(),targetQ:new THREE.Quaternion().setFromUnitVectors(normals[top.index],new THREE.Vector3(0,1,0)),target:new THREE.Vector3([-.78,.78,0][i],.77,[.69,.69,-.82][i])};});rolls[player]=values;scores[player]=values.reduce((a,b)=>a+b,0);
 }
 function finishReveal(){
- phase='revealed';if(mode==='guess'){finishGuess();return;}const value=scores[player];text(`score${player+1}`,value+' 點');$('result').hidden=false;
+ phase='revealed';const value=scores[player];text(`score${player+1}`,value+' 點');$('result').hidden=false;
  if(player===0){text('status',`玩家 1 搖出 ${value} 點`);text('result',rolls[0].join(' + ')+' = '+value+' 點');text('instruction','按下方按鈕，交給玩家 2');text('nextBtn','交給玩家 2');}
  else{const win=scores[0]===scores[1]?'平局！':`玩家 ${scores[0]>scores[1]?1:2} 獲勝！`;text('status',win);text('result',`${scores[0]} : ${scores[1]}　·　${win}`);text('instruction',`玩家 2：${rolls[1].join(' + ')} = ${value} 點`);text('nextBtn','再玩一局');if(scores[0]!==scores[1])$('player'+(scores[0]>scores[1]?1:2)).classList.add('winner');}
  $('nextBtn').hidden=false;text('stageBadge','REVEALED / 已揭盅');text('stageHint',rolls[player].join(' · ')+'　/　'+value+' 點');if(navigator.vibrate)navigator.vibrate([25,40,25]);
  text('voiceBtn','重播廣東話報點');announce(rolls[player]);
 }
-function finishGuess(){
- const values=rolls[0], verdict=judgeGuesses(values,guesses);guessPoints=guessPoints.map((n,i)=>n+verdict.points[i]);
- for(let i=0;i<2;i++){text(`score${i+1}`,guessPoints[i]+' 分');$('player'+(i+1)).classList.toggle('winner',verdict.points[i]===1);}
- text('status',`開${verdict.label}！${verdict.total} 點`);
- text('result',values.join(' + ')+' = '+verdict.total+' 點 · '+verdict.label+'。'+verdict.points.map((n,i)=>`玩家 ${i+1}：${n?'猜中 +1 分':verdict.kind==='triple'?'骰，不加分':'猜錯，不加分'}`).join('；'));
- $('result').hidden=false;text('instruction','再玩一盅會保留分數；重新開始會清零。');text('nextBtn','再玩一盅');$('nextBtn').hidden=false;
- text('stageBadge','已揭盅');text('stageHint',values.join(' · ')+' / '+verdict.label);text('voiceBtn','重播廣東話報點');announce(values);syncGuesses();
-}
 function resetTurn(newGame=false){
  stopMusic();cancelSpeech();$('announcement').hidden=true;text('voiceBtn','試聽廣東話報點');
- held=false;if(mode==='guess'){guesses=[null,null];if(newGame)guessPoints=[0,0];}if(newGame){player=0;scores=[null,null];rolls=[null,null];text('score1','—');text('score2','—');}else player=1;
+ held=false;if(newGame){player=0;scores=[null,null];rolls=[null,null];text('score1','—');text('score2','—');}else player=1;
  phase=started?'ready':'idle';energy=0;flatSince=0;revealProgress=0;settleData=[];world.gravity.set(0,-16,0);cup.position.set(0,0,0);cup.rotation.set(0,0,0);camera.position.set(0,5.1,6.4);camera.lookAt(0,1,0);
  dice.forEach(({body:b,mesh},i)=>{mesh.scale.setScalar(1);b.type=CANNON.Body.DYNAMIC;b.position.set([-.64,.64,0][i],.82,[.52,.52,-.75][i]);b.velocity.setZero();b.angularVelocity.setZero();b.quaternion.setFromEuler(0,rand(-.15,.15),0);b.angularDamping=.35;b.linearDamping=.28;b.wakeUp();});
  $('energyFill').style.width='0%';$('energy').setAttribute('aria-valuenow','0');$('result').hidden=true;$('nextBtn').hidden=true;$('revealBtn').disabled=true;$('shakeBtn').disabled=false;for(let i=1;i<=2;i++){$('player'+i).classList.toggle('is-active',i===player+1);$('player'+i).classList.remove('winner');}
  text('status',`輪到玩家 ${player+1}`);text('instruction','按住下方「搖骰」，再揭盅比點數');text('stageBadge','READY / 等待搖動');text('stageHint','大骰近景 · 三骰實時碰撞');
- if(mode==='guess'){player=0;for(let i=0;i<2;i++){text(`score${i+1}`,guessPoints[i]+' 分');$('player'+(i+1)).classList.add('is-active');}text('status','兩人猜大／小');}syncGuesses();
 }
 function bind(){
  const applyText=large=>{document.documentElement.classList.toggle('large-text',large);$('textBtn').setAttribute('aria-pressed',String(large));text('textBtn',large?'大字：開':'大字：關');};
@@ -128,24 +101,21 @@ function bind(){
  const musicUI=()=>{setMusicEnabled(music);$('musicBtn').setAttribute('aria-pressed',String(music));text('musicBtn',music?'背景音樂：開':'背景音樂：關');};musicUI();
  $('textBtn').addEventListener('click',()=>{const large=!document.documentElement.classList.contains('large-text');applyText(large);try{localStorage.setItem('dice-large-text',String(large));}catch{}});
  $('musicBtn').addEventListener('click',()=>{music=!music;musicUI();if(music&&['shaking','settling'].includes(phase))startMusic();try{localStorage.setItem('dice-music',String(music));}catch{}});
- document.querySelectorAll('[name="mode"]').forEach(r=>r.addEventListener('change',()=>changeMode(r.value)));
- document.querySelectorAll('[data-guess]').forEach(b=>b.addEventListener('click',()=>{if(!['idle','ready'].includes(phase))return;guesses[+b.dataset.player]=b.dataset.guess;syncGuesses();}));
 
- $('startBtn').addEventListener('click',begin);$('revealBtn').addEventListener('click',reveal);$('nextBtn').addEventListener('click',()=>resetTurn(mode==='guess'?false:player===1));$('resetBtn').addEventListener('click',()=>{resetTurn(true);$('settingsPanel').open=false;});
+ $('startBtn').addEventListener('click',begin);$('revealBtn').addEventListener('click',reveal);$('nextBtn').addEventListener('click',()=>resetTurn(player===1));$('resetBtn').addEventListener('click',()=>{resetTurn(true);$('settingsPanel').open=false;});
  $('voiceBtn').addEventListener('click',()=>{unlockAudio();announce(phase==='revealed'?rolls[player]:[4,3,1]);});
- const b=$('shakeBtn');b.style.touchAction='none';b.addEventListener('pointerdown',e=>{if(['settling','revealing','revealed'].includes(phase)||!guessReady())return;e.preventDefault();unlockAudio();if(!started)begin();held=true;b.setPointerCapture(e.pointerId);kick(rand(-12,12),10,rand(-12,12),1);});
+ const b=$('shakeBtn');b.style.touchAction='none';b.addEventListener('pointerdown',e=>{if(['settling','revealing','revealed'].includes(phase))return;e.preventDefault();unlockAudio();if(!started)begin();held=true;b.setPointerCapture(e.pointerId);kick(rand(-12,12),10,rand(-12,12),1);});
  const stop=()=>{held=false;if(phase==='shaking')text('instruction',energy>=12?'按「揭盅」，或將手機放平':'再按住「搖骰」一會兒');};b.addEventListener('pointerup',stop);b.addEventListener('pointercancel',stop);b.addEventListener('lostpointercapture',stop);
- b.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat&&guessReady()&&['idle','ready','shaking'].includes(phase)){e.preventDefault();unlockAudio();if(!started)begin();held=true;}});b.addEventListener('keyup',stop);
+ b.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat&&['idle','ready','shaking'].includes(phase)){e.preventDefault();unlockAudio();if(!started)begin();held=true;}});b.addEventListener('keyup',stop);
  $('soundBtn').addEventListener('click',()=>{sound=!sound;setEnabled(sound);unlockAudio();text('soundBtn',sound?'骰聲及報點：開':'骰聲及報點：關');$('soundBtn').setAttribute('aria-label',sound?'骰聲及報點：開，點擊關閉':'骰聲及報點：關，點擊開啟');$('soundBtn').setAttribute('aria-pressed',String(sound));});document.addEventListener('visibilitychange',()=>{if(document.hidden){held=false;stopMusic(true);cancelSpeech();}});
 }
 let lastUI='';
 function syncUI(){
- const signature=[phase,mode,energy>=12,guessReady()].join('|');if(signature===lastUI)return;lastUI=signature;
+ const signature=[phase,energy>=12].join('|');if(signature===lastUI)return;lastUI=signature;
  const done=phase==='revealed',busy=['settling','revealing'].includes(phase),canReveal=phase==='shaking'&&energy>=12;
  $('shakeBtn').hidden=done||busy;$('revealBtn').hidden=!canReveal;
  $('busyNotice').hidden=!busy;document.querySelector('.controls').classList.toggle('has-reveal',canReveal);
  $('shakeBtn').textContent=canReveal?'繼續搖':'按住搖骰';
- document.body.dataset.mode=mode;
 }
 function frame(){
  syncUI();

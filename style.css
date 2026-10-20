@@ -5,7 +5,7 @@ body{margin:0;min-width:320px;background:radial-gradient(ellipse at 50% 20%,#204
 button,input,summary{font:inherit}
 button,summary{cursor:pointer;-webkit-tap-highlight-color:transparent}
 button{min-height:48px;border-radius:12px;line-height:1.35;padding:10px 14px;color:inherit;border:1px solid var(--line);background:#ffffff08}
-button:focus-visible,summary:focus-visible,label:has(input:focus-visible){outline:3px solid var(--gold);outline-offset:3px}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 button:disabled{opacity:.46;cursor:default}
 [hidden]{display:none!important}
 .game-shell{width:min(100%,500px);margin:auto;padding:max(12px,env(safe-area-inset-top)) 16px max(10px,env(safe-area-inset-bottom));overflow:hidden}
@@ -13,10 +13,6 @@ button:disabled{opacity:.46;cursor:default}
 h1{margin:0;font-size:1.3rem;letter-spacing:.04em;line-height:1.3}
 .text-button{font-size:.85rem;white-space:nowrap;min-height:44px;padding:8px 12px;color:var(--gold)}
 .text-button[aria-pressed=true]{background:var(--gold);color:#17281c}
-.mode-picker{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border:1px solid var(--line);border-radius:14px;margin:0 0 12px;background:#09191188;min-width:0}
-.mode-picker label{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;min-height:48px;padding:8px 6px;font-weight:600;color:var(--muted);cursor:pointer;font-size:1rem}
-.mode-picker input{position:absolute;opacity:0;width:1px;height:1px}
-.mode-picker label:has(:checked){background:var(--gold);color:#17281c}
 .scoreboard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:12px}
 .player-card{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:8px 12px;min-height:54px;border:1px solid #ffffff14;border-radius:12px;background:#ffffff04}
 .player-meta{font-size:.85rem;color:var(--muted)}
@@ -41,13 +37,6 @@ h2{font-size:1.25rem;margin:0;color:var(--gold);line-height:1.4}
 .busy-notice{width:100%;text-align:center;margin:0;padding:14px;font-size:1.1rem;color:var(--gold)}
 .result-card{background:#d6bc7c10;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:1rem;line-height:1.5}
 .announcement{color:var(--gold);font-size:1rem;margin:6px 0;text-align:center}
-.quick-rule{color:var(--muted);font-size:.78rem;margin:0 0 6px;line-height:1.5}
-.guess-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px;border:0;margin:0 0 6px;padding:0 0 0 5.6em;min-width:0;position:relative;font-size:.9rem}
-.guess-picker legend{position:absolute;left:0;top:11px;padding:0;color:var(--muted);font-size:.9rem}
-.guess-picker button{min-height:48px;font-size:1.1rem;padding:7px 10px}
-.guess-picker button[aria-pressed=true]{background:var(--gold);color:#17281c;border-color:var(--gold);font-weight:700}
-.guess-picker button[aria-pressed=true]::before{content:'✓ ';font-size:.85em}
-body[data-mode=guess] .stage-frame{height:clamp(200px,28svh,250px)}
 .settings{margin-top:14px;border-top:1px solid var(--line);font-size:.9rem;color:var(--muted)}
 .settings summary{min-height:48px;padding:12px 4px;color:#e4d7b9;font-size:.9rem}
 .settings-content{padding:2px 0 8px}
@@ -65,8 +54,6 @@ h3{font-size:1rem;margin:16px 0 5px;color:var(--gold)}
 .large-text .topbar{align-items:flex-start}
 .large-text h1{font-size:1.15rem}
 .large-text .player-card{flex-direction:column;align-items:flex-start;padding:9px 10px;gap:0}
-.large-text .guess-picker{padding-left:0;margin-bottom:10px}
-.large-text .guess-picker legend{position:static;margin-bottom:4px}
 .large-text .stage-frame{height:280px}
 @media(max-width:350px){.game-shell{padding-left:12px;padding-right:12px}.player-card{padding:8px}.text-button{padding:8px}h1{font-size:1.2rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}

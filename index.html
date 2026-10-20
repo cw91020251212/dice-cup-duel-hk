@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#10251e">
   <meta name="description" content="骰盅對決：雙人三骰桌遊，不涉及金錢。">
   <title>骰盅對決</title>
-  <link rel="stylesheet" href="./style.css?v=hk-5">
-  <script type="module" src="./app.js?v=hk-5"></script>
+  <link rel="stylesheet" href="./style.css?v=hk-6">
+  <script type="module" src="./app.js?v=hk-6"></script>
 </head>
 <body>
 <main class="game-shell">
@@ -15,11 +15,6 @@
     <h1>骰盅對決</h1>
     <button id="textBtn" class="text-button" type="button" aria-pressed="false">大字：關</button>
   </header>
-
-  <fieldset class="mode-picker"><legend class="sr-only">玩法選擇（切換會重新開始）</legend>
-    <label><input type="radio" name="mode" value="duel" checked><span>比點數</span></label>
-    <label><input type="radio" name="mode" value="guess"><span>猜大／小</span></label>
-  </fieldset>
 
   <section class="scoreboard" aria-label="玩家記分">
     <article class="player-card is-active" id="player1" aria-label="玩家 1">
@@ -33,19 +28,6 @@
   <section class="turn-copy" aria-label="目前輪次及下一步">
     <h2 id="status" role="status" aria-live="polite">輪到玩家 1</h2>
     <p id="instruction">按住下方「搖骰」，再揭盅比點數</p>
-  </section>
-
-  <section id="guessPanel" aria-label="兩人猜大或小" hidden>
-    <p class="quick-rule">小 4–10 · 大 11–17 · 三粒相同＝骰</p>
-    <p id="guessHint" class="sr-only" aria-live="polite">兩位玩家先選大或小，再搖同一盅。</p>
-    <fieldset class="guess-picker"><legend>玩家 1 猜</legend>
-      <button type="button" data-player="0" data-guess="small" aria-pressed="false">小</button>
-      <button type="button" data-player="0" data-guess="big" aria-pressed="false">大</button>
-    </fieldset>
-    <fieldset class="guess-picker"><legend>玩家 2 猜</legend>
-      <button type="button" data-player="1" data-guess="small" aria-pressed="false">小</button>
-      <button type="button" data-player="1" data-guess="big" aria-pressed="false">大</button>
-    </fieldset>
   </section>
 
   <section class="stage-wrap" aria-label="骰盅遊戲區域">
@@ -79,9 +61,8 @@
       <p id="sensorStatus" class="setting-note">亦可搖手機；首次操作會要求體感權限。</p>
       <p id="voiceStatus" class="setting-note">正在檢查廣東話語音…</p>
       <h3>玩法</h3>
-      <p id="modeRules">兩人輪流搖三粒骰，總點數較大者勝，同分平局。</p>
+      <p id="gameRules">兩人輪流搖三粒骰，總點數較大者勝，同分平局。</p>
       <p>搖好後按「揭盅」；體感已連接時，手機放平亦可自動揭盅。</p>
-      <p>切換玩法會重新開始；猜大／小的「再玩一盅」會保留分數。</p>
       <p id="footerRules" class="sr-only">三骰總點數較大者勝 · 同分平局 · 兩人輪流</p>
       <button class="setting-button reset-button" id="resetBtn" type="button">重新開始／分數清零</button>
       <p class="audio-credit">骰盅實錄：<a href="https://pixabay.com/sound-effects/dice-cup-60668/" target="_blank" rel="noopener">Breviceps / Pixabay</a> · <a href="https://pixabay.com/service/license-summary/" target="_blank" rel="noopener">內容授權</a>。背景音樂為原創合成短曲。</p>
