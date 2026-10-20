@@ -96,6 +96,11 @@ function resetTurn(newGame=false){
  text('status',`輪到玩家 ${player+1}`);text('instruction','按住下方「搖骰」，再揭盅比點數');text('stageBadge','READY / 等待搖動');text('stageHint','大骰近景 · 三骰實時碰撞');
 }
 function bind(){
+ try{$('firstPlayTip').hidden=localStorage.getItem('dice-first-play-seen')==='true';}catch{$('firstPlayTip').hidden=false;}
+ $('firstPlayAck').addEventListener('click',()=>{
+  try{localStorage.setItem('dice-first-play-seen','true');}catch{}
+  $('firstPlayTip').hidden=true;begin();$('shakeBtn').focus({preventScroll:true});
+ });
  const applyText=large=>{document.documentElement.classList.toggle('large-text',large);$('textBtn').setAttribute('aria-pressed',String(large));text('textBtn',large?'大字：開':'大字：關');};
  try{applyText(localStorage.getItem('dice-large-text')==='true');music=localStorage.getItem('dice-music')==='true';}catch{applyText(false);}
  const musicUI=()=>{setMusicEnabled(music);$('musicBtn').setAttribute('aria-pressed',String(music));text('musicBtn',music?'背景音樂：開':'背景音樂：關');};musicUI();

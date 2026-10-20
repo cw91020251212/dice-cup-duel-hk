@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#10251e">
   <meta name="description" content="骰盅對決：雙人三骰桌遊，不涉及金錢。">
   <title>骰盅對決</title>
-  <link rel="stylesheet" href="./style.css?v=hk-6">
-  <script type="module" src="./app.js?v=hk-6"></script>
+  <link rel="stylesheet" href="./style.css?v=hk-7">
+  <script type="module" src="./app.js?v=hk-7"></script>
 </head>
 <body>
 <main class="game-shell">
@@ -15,6 +15,13 @@
     <h1>骰盅對決</h1>
     <button id="textBtn" class="text-button" type="button" aria-pressed="false">大字：關</button>
   </header>
+
+  <section id="firstPlayTip" class="first-play-tip" aria-labelledby="firstPlayTitle" hidden>
+    <h2 id="firstPlayTitle">首次遊玩提示</h2>
+    <p>手持手機，像手搖骰盅般搖動；搖好後放平手機即可自動揭盅。</p>
+    <p class="tip-note">請握穩手機，輕輕搖動。體感未能使用時，可按住「搖骰」，再按「揭盅」。</p>
+    <button id="firstPlayAck" class="button button-primary" type="button">知道了，開始玩</button>
+  </section>
 
   <section class="scoreboard" aria-label="玩家記分">
     <article class="player-card is-active" id="player1" aria-label="玩家 1">

@@ -57,3 +57,9 @@ h3{font-size:1rem;margin:16px 0 5px;color:var(--gold)}
 .large-text .stage-frame{height:280px}
 @media(max-width:350px){.game-shell{padding-left:12px;padding-right:12px}.player-card{padding:8px}.text-button{padding:8px}h1{font-size:1.2rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.first-play-tip{border:1px solid var(--gold);border-radius:14px;padding:14px;margin:0 0 14px;background:#18392b}
+.first-play-tip h2{font-size:1.15rem}
+.first-play-tip p{font-size:1rem;margin:8px 0;line-height:1.6}
+.first-play-tip .tip-note{color:var(--muted);font-size:.85rem}
+.first-play-tip button{width:100%;margin-top:6px}
