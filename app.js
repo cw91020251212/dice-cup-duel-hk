@@ -8,6 +8,9 @@ let scene, camera, renderer, world, dice=[], cup, lid, plate, clock;
 let phase='idle', player=0, scores=[null,null], rolls=[null,null], energy=0, held=false, started=false, sound=true, audio, lastSound=0, lastKick=0, lastMotion=0, revealAt=0, flatSince=0, orient=null, sensorSeen=false, simAccumulator=0, startTime=0, revealProgress=0, settleData=[];
 let music=false;
 let gravityEstimate={x:0,y:0,z:9.81};
+// A new, deliberate back-and-forth shake may advance only a completed turn.
+let nextShakeReadyAt=Infinity, nextShakePeak=null;
+const NEXT_SHAKE_DELAY=900, NEXT_SHAKE_THRESHOLD=8, NEXT_SHAKE_WINDOW=650;
 const faces=[3,4,1,6,2,5];
 const normals=[new THREE.Vector3(1,0,0),new THREE.Vector3(-1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,-1,0),new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,-1)];
 const rand=(a,b)=>a+Math.random()*(b-a);
@@ -64,12 +67,31 @@ async function begin(){
  }catch{text('sensorStatus','體感未獲授權 · 可按住按鈕搖骰');}
  window.addEventListener('devicemotion',motion);window.addEventListener('deviceorientation',orientation);
 }
+function nextTurn(){
+ if(phase!=='revealed')return false;
+ resetTurn(player===1);return true;
+}
+function advanceWithShake(a,now){
+ if(phase!=='revealed'||document.hidden||!$('firstPlayTip').hidden||$('settingsPanel').open||now<nextShakeReadyAt){nextShakePeak=null;return false;}
+ const vector={x:a.x||0,y:a.y||0,z:a.z||0};
+ if(Math.hypot(vector.x,vector.y,vector.z)<NEXT_SHAKE_THRESHOLD)return false;
+ if(nextShakePeak&&now-nextShakePeak.at>NEXT_SHAKE_WINDOW)nextShakePeak=null;
+ if(nextShakePeak){
+  const elapsed=now-nextShakePeak.at;
+  const dot=vector.x*nextShakePeak.x+vector.y*nextShakePeak.y+vector.z*nextShakePeak.z;
+  if(elapsed>=80&&dot<0){nextShakePeak=null;return nextTurn();}
+  if(elapsed<80)return false;
+ }
+ nextShakePeak={...vector,at:now};return false;
+}
 function motion(e){
  let a=e.acceleration;const g=e.accelerationIncludingGravity;
  if(!a||a.x===null){if(!g||g.x===null)return;for(const k of ['x','y','z'])gravityEstimate[k]=gravityEstimate[k]*.86+(g[k]||0)*.14;a={x:g.x-gravityEstimate.x,y:g.y-gravityEstimate.y,z:g.z-gravityEstimate.z};}
- if(a.x===null)return;sensorSeen=true;lastMotion=performance.now();text('sensorStatus','體感已連接 · 放平自動揭盅');
+ if(a.x===null)return;sensorSeen=true;const now=performance.now();lastMotion=now;text('sensorStatus','體感已連接 · 放平自動揭盅');
+ if(document.hidden||!$('firstPlayTip').hidden||$('settingsPanel').open){nextShakePeak=null;return;}
+ if(phase==='revealed'&&!advanceWithShake(a,now))return;
  const strength=Math.hypot(a.x||0,a.y||0,a.z||0);
- if(strength>3.5&&performance.now()-lastKick>55){flatSince=0;kick(-(a.x||0),a.z||0,a.y||0,Math.min(2,strength/10));}
+ if(strength>3.5&&now-lastKick>55){flatSince=0;kick(-(a.x||0),a.z||0,a.y||0,Math.min(2,strength/10));}
 }
 function orientation(e){if(e.beta===null||e.gamma===null)return;orient={beta:e.beta,gamma:e.gamma};if(['ready','shaking'].includes(phase)){world.gravity.set(Math.max(-9,Math.min(9,-e.gamma*.18)),-16,Math.max(-9,Math.min(9,e.beta*.13)));}}
 function topFace(mesh){let max=-2,index=0;for(let i=0;i<6;i++){const y=normals[i].clone().applyQuaternion(mesh.quaternion).y;if(y>max){max=y;index=i;}}return {value:faces[index],index};}
@@ -82,13 +104,16 @@ function startReveal(){
 }
 function finishReveal(){
  phase='revealed';const value=scores[player];text(`score${player+1}`,value+' 點');$('result').hidden=false;
- if(player===0){text('status',`玩家 1 搖出 ${value} 點`);text('result',rolls[0].join(' + ')+' = '+value+' 點');text('instruction','按下方按鈕，交給玩家 2');text('nextBtn','交給玩家 2');}
+ nextShakeReadyAt=performance.now()+NEXT_SHAKE_DELAY;nextShakePeak=null;
+ if(player===0){text('status',`玩家 1 搖出 ${value} 點`);text('result',rolls[0].join(' + ')+' = '+value+' 點');text('instruction','搖一搖手機，或按下方按鈕交給玩家 2');text('nextBtn','交給玩家 2');}
  else{const win=scores[0]===scores[1]?'平局！':`玩家 ${scores[0]>scores[1]?1:2} 獲勝！`;text('status',win);text('result',`${scores[0]} : ${scores[1]}　·　${win}`);text('instruction',`玩家 2：${rolls[1].join(' + ')} = ${value} 點`);text('nextBtn','再玩一局');if(scores[0]!==scores[1])$('player'+(scores[0]>scores[1]?1:2)).classList.add('winner');}
+ if(player===1)text('instruction',`玩家 2：${rolls[1].join(' + ')} = ${value} 點；搖手機或按「再玩一局」`);
  $('nextBtn').hidden=false;text('stageBadge','REVEALED / 已揭盅');text('stageHint',rolls[player].join(' · ')+'　/　'+value+' 點');if(navigator.vibrate)navigator.vibrate([25,40,25]);
  text('voiceBtn','重播廣東話報點');announce(rolls[player]);
 }
 function resetTurn(newGame=false){
  stopMusic();cancelSpeech();$('announcement').hidden=true;text('voiceBtn','試聽廣東話報點');
+ nextShakeReadyAt=Infinity;nextShakePeak=null;
  held=false;if(newGame){player=0;scores=[null,null];rolls=[null,null];text('score1','—');text('score2','—');}else player=1;
  phase=started?'ready':'idle';energy=0;flatSince=0;revealProgress=0;settleData=[];world.gravity.set(0,-16,0);cup.position.set(0,0,0);cup.rotation.set(0,0,0);camera.position.set(0,5.1,6.4);camera.lookAt(0,1,0);
  dice.forEach(({body:b,mesh},i)=>{mesh.scale.setScalar(1);b.type=CANNON.Body.DYNAMIC;b.position.set([-.64,.64,0][i],.82,[.52,.52,-.75][i]);b.velocity.setZero();b.angularVelocity.setZero();b.quaternion.setFromEuler(0,rand(-.15,.15),0);b.angularDamping=.35;b.linearDamping=.28;b.wakeUp();});
@@ -107,12 +132,13 @@ function bind(){
  $('textBtn').addEventListener('click',()=>{const large=!document.documentElement.classList.contains('large-text');applyText(large);try{localStorage.setItem('dice-large-text',String(large));}catch{}});
  $('musicBtn').addEventListener('click',()=>{music=!music;musicUI();if(music&&['shaking','settling'].includes(phase))startMusic();try{localStorage.setItem('dice-music',String(music));}catch{}});
 
- $('startBtn').addEventListener('click',begin);$('revealBtn').addEventListener('click',reveal);$('nextBtn').addEventListener('click',()=>resetTurn(player===1));$('resetBtn').addEventListener('click',()=>{resetTurn(true);$('settingsPanel').open=false;});
+ $('startBtn').addEventListener('click',begin);$('revealBtn').addEventListener('click',reveal);$('nextBtn').addEventListener('click',nextTurn);$('resetBtn').addEventListener('click',()=>{resetTurn(true);$('settingsPanel').open=false;});
+ $('settingsPanel').addEventListener('toggle',()=>{nextShakePeak=null;nextShakeReadyAt=performance.now()+NEXT_SHAKE_DELAY;});
  $('voiceBtn').addEventListener('click',()=>{unlockAudio();announce(phase==='revealed'?rolls[player]:[4,3,1]);});
  const b=$('shakeBtn');b.style.touchAction='none';b.addEventListener('pointerdown',e=>{if(['settling','revealing','revealed'].includes(phase))return;e.preventDefault();unlockAudio();if(!started)begin();held=true;b.setPointerCapture(e.pointerId);kick(rand(-12,12),10,rand(-12,12),1);});
  const stop=()=>{held=false;if(phase==='shaking')text('instruction',energy>=12?'按「揭盅」，或將手機放平':'再按住「搖骰」一會兒');};b.addEventListener('pointerup',stop);b.addEventListener('pointercancel',stop);b.addEventListener('lostpointercapture',stop);
  b.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat&&['idle','ready','shaking'].includes(phase)){e.preventDefault();unlockAudio();if(!started)begin();held=true;}});b.addEventListener('keyup',stop);
- $('soundBtn').addEventListener('click',()=>{sound=!sound;setEnabled(sound);unlockAudio();text('soundBtn',sound?'骰聲及報點：開':'骰聲及報點：關');$('soundBtn').setAttribute('aria-label',sound?'骰聲及報點：開，點擊關閉':'骰聲及報點：關，點擊開啟');$('soundBtn').setAttribute('aria-pressed',String(sound));});document.addEventListener('visibilitychange',()=>{if(document.hidden){held=false;stopMusic(true);cancelSpeech();}});
+ $('soundBtn').addEventListener('click',()=>{sound=!sound;setEnabled(sound);unlockAudio();text('soundBtn',sound?'骰聲及報點：開':'骰聲及報點：關');$('soundBtn').setAttribute('aria-label',sound?'骰聲及報點：開，點擊關閉':'骰聲及報點：關，點擊開啟');$('soundBtn').setAttribute('aria-pressed',String(sound));});document.addEventListener('visibilitychange',()=>{nextShakePeak=null;nextShakeReadyAt=performance.now()+NEXT_SHAKE_DELAY;if(document.hidden){held=false;stopMusic(true);cancelSpeech();}});
 }
 let lastUI='';
 function syncUI(){
